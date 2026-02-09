@@ -1,0 +1,6 @@
+import express from "express"
+import { getCourseId } from "../controllers/courseController"
+const courseRouter=express.Router()
+courseRouter.get('/all',getAllCourse)
+courseRouter.get('/:id',getCourseId)
+export default courseRouter

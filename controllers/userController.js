@@ -1,3 +1,4 @@
+import Course from "../models/Course"
 import { CourseProgress } from "../models/courseProgress"
 import User from "../models/User"
 
@@ -86,7 +87,7 @@ export const purchaseCourse=async(req,res)=>{
     try{
         const userId=req.auth.userId,
         const {courseId,lectureId}=req.body
-        const progressData=await CourseProgress.finOne({userId,courseId})
+        const progressData=await CourseProgress.findOne({userId,courseId})
         if (progressData){
             if(progressData.lectureCompleted.includes(lectureId)){
                 return res.json({success:true,message:'Lecture Already Completed'})
@@ -95,8 +96,70 @@ export const purchaseCourse=async(req,res)=>{
             await progressData.save()
         }
         else{
-            await pror
+            await progressData.create({
+                userId,
+                courseId,
+                lectureCompleted:[lectureId]
+            })
         }
+        res.json({success:true,message:'progress updated'})
+    }
+    catch (error) {
+        res.json({success:false,message:error.message})
     }
 
   }
+
+  //get user Course progress
+
+
+
+     User.findById(userId).populate(course)
+
+
+     export const getUserCourseProgress=async(req,res)=>{
+        try{
+         const userId=req.auth.userId
+         const {courseId}=req.body
+         const progressData=CourseProgress.findOne({userId,courseId})
+         res.json({success:true,progressData})
+
+        }
+        catch (error ) {
+            res.json({success:false,message:error.message})
+        }
+     }
+
+
+     //add user ratings to course   ratings.find(courseId,userId)  const rating=new Rating.create({courseId,userId,rating}) Rating.save() course.courseRatings.push(newRating)
+     export const addUserRating=async(req,res)=>{
+        const userId=req.auth.userId;
+        const {courseId,rating}=req.body;
+        if (!courseId|| !userId||!rating||rating <1 ||rating > 5)
+        {
+            return res.json({success:false,message:'invalid details'});
+
+        }
+        try{
+            const course=Course.findById(courseId);
+            if(!course){
+                return res.json({success:false,message:'course not found'})
+            }
+            const user=await User.findbyId(userId);
+            if(!user|| user.enrolledCourses.includes(courseId)){
+                return res.json({success:false,message:'User has not purchased this course'})
+            }
+            const existingRatingIndex=course.courseRatings.findIndex(r=> r.userId===userId)
+            if (existingRating>-1){
+                course.courseRatings[existingRatingIndex].rating=rating
+            }
+            else{
+                course.courseRatings.push({userId,rating})
+            }
+            await Course.save()
+            return res.json({success:true,message:'Rating added'})
+        }
+        catch(error){
+   res.json({success:false,message:error.message})
+        }
+     }
